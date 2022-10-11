@@ -1,0 +1,116 @@
+﻿@model IEnumerable<FinAPP.Models.AcfcModel>
+
+@{
+    ViewData["Title"] = "FinApp Acfc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    
+}
+@section Styles{
+    <link href="~/js/jquery-ui-month-picker/src/monthpicker.css" rel="stylesheet" />
+
+}
+
+    <h1>@ViewData["Title"]</h1>
+
+    <p>
+        Version Select
+        <select id="Version" action="GetData">
+            @for (var i = 1; i <= 12; i++)
+            {
+                <option value="@i">@i</option>
+            }
+        </select>
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    Dept / Month
+                </th>
+            @for (var i = 1; i <= 12; i++)
+            {
+                <th>
+                    @i
+                </th>
+            }
+
+
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var groupDept = Model.GroupBy(dept => dept.Dept).Select(g => new { Dept = g.Key });
+
+        }
+
+        @foreach (var item in groupDept)
+        {
+            <tr>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.Dept)
+                </td>
+                @for (var i = 1; i <= 12; i++)
+                {
+                    var query = (from acfc in this.Model
+                                 where acfc.Dept == item.Dept && acfc.Version == i.ToString()
+                                select acfc).FirstOrDefault();
+                    if (query != null)
+                    {
+                        @if (!string.IsNullOrEmpty(query.Actual.ToString())){
+                            <td>
+                                @Html.DisplayFor(modelItem => query.Actual)
+                            </td>
+                        }else{
+                            <td>
+                                @Html.DisplayFor(modelItem => query.Forecast)
+                            </td>
+                        }
+                        
+                    }else{
+                        <td></td>
+                    }
+               }
+                
+            </tr>
+        }
+    </tbody>
+</table>
+<div id="productcontainer">
+    @await Html.PartialAsync("_FinAppPartialView")
+</div>
+
+
+
+@section Scripts{
+    <script src="~/js/jquery-ui-month-picker/src/monthpicker.js"></script>
+    <script>
+
+        $(function () {
+
+
+
+            $("#Version").change(function(){
+                $.ajax({
+                    type: "POST",
+                    url: "/Acfc/GetData",  //remember change the controller to your owns.
+                    data:{ "version": this.value },
+                    success: function (data) {
+                        $("#productcontainer").html("");
+                        $("#productcontainer").html(data);
+                    },
+                    error: function (response) {
+                        console.log(response.responseText);
+                    }
+                });
+            });
+
+
+        });
+
+
+    </script>
+}
